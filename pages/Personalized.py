@@ -28,6 +28,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
 from functools import partial
+import urllib.parse, urllib.request
 import streamlit as st
 
 
@@ -53,75 +54,94 @@ def make_driver():
 
 # Function to obtain the fasta-formatted gene sequence of interest from UniProt
 def get_gene_sequence(target_gene):
-    #  Instantiates the web scraping tool and accesses UniProt website
-    driver = make_driver()
-    driver.get('https://www.uniprot.org/')
+    """
+    Fetch the FASTA for a human, reviewed entry for `target_gene` from UniProt REST
+    and write <target_gene>.fasta. Avoids Selenium (faster & reliable).
+    """
+    # Query: exact gene name, human, reviewed (Swiss-Prot)
+    query = f'(gene_exact:{target_gene}) AND (organism_id:9606) AND (reviewed:true)'
+    params = urllib.parse.urlencode({"query": query, "format": "fasta", "compressed": "false"})
+    url = f"https://rest.uniprot.org/uniprotkb/stream?{params}"
 
-    sleep(1)
+    with urllib.request.urlopen(url, timeout=120) as resp:
+        data = resp.read().decode("utf-8")
 
-    # Anytime By.XPATH is used, it means using the inspect element button to find the html pointer of a certain button
-    # or text box or text
-    search_box = driver.find_element(By.XPATH,
-                                     '/html/body/div[1]/div/div/main/div/div[1]/div/section/form/div[2]/input')
-    search_box.send_keys(target_gene)
+    # Basic sanity check; UniProt returns FASTA starting with '>'
+    if not data.strip().startswith(">"):
+        raise RuntimeError(f"UniProt returned no FASTA for gene '{target_gene}'. "
+                           f"Try a different symbol or relax filters.")
 
-    sleep(1.5)
-
-    submit_button = driver.find_element(By.XPATH, '//*[@type="submit"]')
-    submit_button.click()
-
-    sleep(3.5)
-
-    try:
-        choose_table = driver.find_element(By.XPATH, '/html/body/form/div/span/label[2]/input')
-    except NoSuchElementException:
-        print("No format selector")
-    else:
-        choose_table.click()
-
-    sleep(0.5)
-
-    view_results_button = driver.find_element(By.XPATH, '/html/body/form/div/section/button')
-    view_results_button.click()
-
-    sleep(1)
-
-    filter_human = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/aside/div/ul/li[2]/div/ul/li[1]/a')
-    filter_human.click()
-
-    sleep(1)
-
-    gene_button = driver.find_element(By.XPATH,
-                                      '/html/body/div[1]/div/div/div/main/div[4]/table/tbody/tr[1]/td[2]/span/a')
-    gene_button.click()
-
-    sleep(5)
-
-    download_button = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/main/div/div[2]/div/button[1]')
-    driver.execute_script("arguments[0].scrollIntoView();", download_button)
-    driver.execute_script("arguments[0].click();", download_button)
-
-    sleep(0.5)
-
-    fasta_button = driver.find_element(By.XPATH, '/html/body/aside/div[2]/fieldset[2]/label/select/option[2]')
-    fasta_button.click()
-
-    download_button2 = driver.find_element(By.XPATH, '/html/body/aside/div[2]/section[1]/a')
-    download_button2.click()
-
-    sleep(2)
-
-    child_tab = driver.window_handles[1]
-    driver.switch_to.window(child_tab)
-
-    result_fasta = driver.find_element(By.XPATH, '/html/body/pre').text
     with open(f"{target_gene}.fasta", "w") as g:
-        g.write(result_fasta)
-
-    for tab in driver.window_handles:
-        driver.switch_to.window(tab)
-        # driver.close()
-        driver.quit()
+        g.write(data)
+    # #  Instantiates the web scraping tool and accesses UniProt website
+    # driver = make_driver()
+    # driver.get('https://www.uniprot.org/')
+    #
+    # sleep(1)
+    #
+    # # Anytime By.XPATH is used, it means using the inspect element button to find the html pointer of a certain button
+    # # or text box or text
+    # search_box = driver.find_element(By.XPATH,
+    #                                  '/html/body/div[1]/div/div/main/div/div[1]/div/section/form/div[2]/input')
+    # search_box.send_keys(target_gene)
+    #
+    # sleep(1.5)
+    #
+    # submit_button = driver.find_element(By.XPATH, '//*[@type="submit"]')
+    # submit_button.click()
+    #
+    # sleep(3.5)
+    #
+    # try:
+    #     choose_table = driver.find_element(By.XPATH, '/html/body/form/div/span/label[2]/input')
+    # except NoSuchElementException:
+    #     print("No format selector")
+    # else:
+    #     choose_table.click()
+    #
+    # sleep(0.5)
+    #
+    # view_results_button = driver.find_element(By.XPATH, '/html/body/form/div/section/button')
+    # view_results_button.click()
+    #
+    # sleep(1)
+    #
+    # filter_human = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/aside/div/ul/li[2]/div/ul/li[1]/a')
+    # filter_human.click()
+    #
+    # sleep(1)
+    #
+    # gene_button = driver.find_element(By.XPATH,
+    #                                   '/html/body/div[1]/div/div/div/main/div[4]/table/tbody/tr[1]/td[2]/span/a')
+    # gene_button.click()
+    #
+    # sleep(5)
+    #
+    # download_button = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/main/div/div[2]/div/button[1]')
+    # driver.execute_script("arguments[0].scrollIntoView();", download_button)
+    # driver.execute_script("arguments[0].click();", download_button)
+    #
+    # sleep(0.5)
+    #
+    # fasta_button = driver.find_element(By.XPATH, '/html/body/aside/div[2]/fieldset[2]/label/select/option[2]')
+    # fasta_button.click()
+    #
+    # download_button2 = driver.find_element(By.XPATH, '/html/body/aside/div[2]/section[1]/a')
+    # download_button2.click()
+    #
+    # sleep(2)
+    #
+    # child_tab = driver.window_handles[1]
+    # driver.switch_to.window(child_tab)
+    #
+    # result_fasta = driver.find_element(By.XPATH, '/html/body/pre').text
+    # with open(f"{target_gene}.fasta", "w") as g:
+    #     g.write(result_fasta)
+    #
+    # for tab in driver.window_handles:
+    #     driver.switch_to.window(tab)
+    #     # driver.close()
+    #     driver.quit()
 
 
 # Function to create whole mutant fasta genes from each point mutation of interest
