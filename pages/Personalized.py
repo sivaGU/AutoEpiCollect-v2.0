@@ -19,8 +19,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver import ChromeOptions
-import chromedriver_autoinstaller
+from selenium.webdriver.chrome.options import Options
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
@@ -28,14 +27,20 @@ from functools import partial
 import streamlit as st
 
 
+def make_driver():
+    opts = Options()
+    # headless + container-friendly flags
+    opts.add_argument("--headless=new")
+    opts.add_argument("--no-sandbox")
+    opts.add_argument("--disable-dev-shm-usage")
+    # Selenium Manager will auto-download a compatible browser/driver on first run
+    return webdriver.Chrome(options=opts)
+
+
 # Function to obtain the fasta-formatted gene sequence of interest from UniProt
 def get_gene_sequence(target_gene):
     #  Instantiates the web scraping tool and accesses UniProt website
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # Headless means that a new Chrome window doesn't pop up, it accesses Chrome in the background
-    # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome()
+    driver = make_driver()
     driver.get('https://www.uniprot.org/')
 
     sleep(1)
@@ -72,7 +77,8 @@ def get_gene_sequence(target_gene):
 
     sleep(1)
 
-    gene_button = driver.find_element(By.XPATH, '/html/body/div[1]/div/div/div/main/div[3]/table/tbody/tr[1]/td[2]/span/a')
+    gene_button = driver.find_element(By.XPATH,
+                                      '/html/body/div[1]/div/div/div/main/div[3]/table/tbody/tr[1]/td[2]/span/a')
     gene_button.click()
 
     sleep(5)
@@ -100,7 +106,8 @@ def get_gene_sequence(target_gene):
 
     for tab in driver.window_handles:
         driver.switch_to.window(tab)
-        driver.close()
+        # driver.close()
+        driver.quit()
 
 
 # Function to create whole mutant fasta genes from each point mutation of interest
@@ -245,7 +252,7 @@ def get_mutant_epitopes(mutant_list, mhc, all_epitopes_dict, parent_dir):
                     current_end_index = current_start_index + len(pep) - 1
                     # print(end_index)
                     if pep not in target_epitope or not current_start_index <= loc <= current_end_index:
-                    # if pep not in target_epitope:
+                        # if pep not in target_epitope:
                         bad_epitopes_indexes.append(index)
                     else:
                         print(f"{pep}, {current_start_index}, {current_end_index}")
@@ -284,7 +291,7 @@ def get_mutant_epitopes(mutant_list, mhc, all_epitopes_dict, parent_dir):
                     current_end_index = current_start_index + len(pep) - 1
                     # print(current_end_index)
                     if pep not in target_epitope or not current_start_index <= loc <= current_end_index:
-                    # if pep not in target_epitope:
+                        # if pep not in target_epitope:
                         bad_epitopes_indexes.append(i)
                     else:
                         print(f"{pep}, {current_start_index}, {current_end_index}")
@@ -334,10 +341,7 @@ def get_local_immunogenicity_mhci(immunogenicity_file, peptide_file, current_df)
 # Function that obtain the immunogenicity scores of MHC II peptides by webscraping the IEDB website
 # This function is a work in progress as this website is finnicky and slow right now
 def get_immunogenicity_mhcii(peptide_list, p, current_df):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome()
+    driver = make_driver()
     driver.get('http://tools.iedb.org/CD4episcore/')
 
     elem = WebDriverWait(driver, 60).until(
@@ -365,17 +369,15 @@ def get_immunogenicity_mhcii(peptide_list, p, current_df):
         e = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[3]').text
         current_df.loc[current_df["peptide"] == e, "immunogenicity"] = float(result)
 
-    driver.close()
+    # driver.close()
+    driver.quit()
     return current_df
 
 
 # Function that obtains the antigenicity scores of both MHC I and II peptides.
 # This function is a work in progress as VaxiJen v2.0 has a human verification loop that is blocking automation
 def get_antigenicity(peptide_list, peptide_fasta, current_df):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome(options=options)
+    driver = make_driver()
     driver.get('http://www.ddg-pharmfac.net/vaxijen/VaxiJen/VaxiJen.html')
 
     file_box = driver.find_element(By.XPATH, '//input[@type="FILE"]')
@@ -398,16 +400,14 @@ def get_antigenicity(peptide_list, peptide_fasta, current_df):
                                 f'/html/body/div/table/tbody/tr[4]/td[3]/table/tbody/tr/td/font[{2 * (x + 1)}]').text
         current_df.loc[current_df["peptide"] == e, "antigenicity"] = float(result)
 
-    driver.close()
+    # driver.close()
+    driver.quit()
     return current_df
 
 
 # Function that obtains the allergenicity of MHC class I epitopes using web scraping
 def get_allergenicity_algpred(peptide_list, pf, current_df):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome(options=options)
+    driver = make_driver()
     driver.get('https://webs.iiitd.edu.in/raghava/algpred2/batch.html')
 
     text_box = driver.find_element(By.XPATH,
@@ -432,7 +432,8 @@ def get_allergenicity_algpred(peptide_list, pf, current_df):
                                      f'/html/body/header/div[3]/main/div/table[2]/tbody/tr[{x + 1}]/td[5]').text
         current_df.loc[current_df["peptide"] == peptide_list[x], "allergenicity"] = float(result)
 
-    driver.close()
+    # driver.close()
+    driver.quit()
     return current_df
 
 
@@ -440,10 +441,7 @@ def get_allergenicity_algpred(peptide_list, pf, current_df):
 def get_allergenicity_netallergen(peptide_list, pf, current_df, peptide_fasta):
     input_fasta = pf + ">Epitope119" + "\n" + "TIETLMLLALIAAAA"
 
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome()
+    driver = make_driver()
     driver.get('https://services.healthtech.dtu.dk/services/NetAllergen-1.0/')
 
     try:
@@ -487,23 +485,20 @@ def get_allergenicity_netallergen(peptide_list, pf, current_df, peptide_fasta):
         result = df["Score_60F"][count]
         current_df.loc[current_df["peptide"] == pep, "allergenicity"] = float(result)
         count += 1
+    driver.quit()
     return current_df
 
 
 # Function that access ProtParam and obtains the half-life, instability, aliphatic index, isoelectric point, and
 # GRAVY score of peptides. Only half-life and instability are used for filtering epitopes.
 def get_protparam(peptide_list, h, ins, ali, iso, g, current_df):
+    driver = make_driver()
     for e in peptide_list:
-        options = webdriver.ChromeOptions()
-        options.add_argument("--headless=new")
-        # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-        driver = webdriver.Chrome(options=options)
         driver.get('https://web.expasy.org/protparam/')
 
         # searchbox = driver.find_element(By.XPATH, '//*[@id="sib_body"]/form/textarea')
         searchbox = driver.find_element(By.XPATH, '/html/body/main/div/form/textarea')
         searchbox.send_keys(e)
-
 
         # submitButton = driver.find_elements(By.XPATH, '/html/body/div[2]/div[2]/form/p[1]/input[2]')
         submitButton = driver.find_element(By.XPATH, '/html/body/main/div/form/input[3]')
@@ -539,17 +534,13 @@ def get_protparam(peptide_list, h, ins, ali, iso, g, current_df):
             current_df.loc[current_df["peptide"] == e, "aliphatic index"] = float(alipathy)
         if g:
             current_df.loc[current_df["peptide"] == e, "GRAVY score"] = float(gravy)
-
-        driver.close()
+    driver.quit()
     return current_df
 
 
 # Obtains the toxicity of peptides using webscraping
 def get_toxicity(peptide_list, pf, current_df):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome(options=options)
+    driver = make_driver()
     driver.get('https://webs.iiitd.edu.in/raghava/toxinpred/multi_submit.php')
 
     submission_box = driver.find_element(By.XPATH, '//*[@id="input_box"]')
@@ -567,16 +558,14 @@ def get_toxicity(peptide_list, pf, current_df):
         e = driver.find_element(By.XPATH, f'/html/body/div[2]/table/tbody/tr[{x + 1}]/td[2]/a').text
         current_df.loc[current_df["peptide"] == e, "toxicity"] = result
 
-    driver.close()
+    # driver.close()
+    driver.quit()
     return current_df
 
 
 # Obtains the IFN-gamma release of epitopes. IFN-gamma only used for filtering MHC Class II epitopes.
 def get_ifn(peptide_list, pf, current_df):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    # driver = webdriver.Chrome(options=options, service=ChromeService(ChromeDriverManager().install()))
-    driver = webdriver.Chrome(options=options)
+    driver = make_driver()
     driver.get('https://webs.iiitd.edu.in/raghava/ifnepitope/predict.php')
 
     submission_box = driver.find_element(By.XPATH, '//*[@name="sequence"]')
@@ -598,7 +587,7 @@ def get_ifn(peptide_list, pf, current_df):
                                 f'/html/body/div/div/div[3]/div/div/div/div/table/tbody/tr[{x + 1}]/td[3]/a').text
         current_df.loc[current_df["peptide"] == e, "IFNg"] = result
 
-    driver.close()
+    driver.quit()
     return current_df
 
 
@@ -640,10 +629,10 @@ def normalize_data(df_collected_epitopes, mhc):
         allergenicity_value = df_collected_epitopes[allergenicity_name][i]
         if mhc == "I":
             new_immunogenicity_value = (immunogenicity_value - immunogenicity_min) / (
-                        immunogenicity_max - immunogenicity_min)
+                    immunogenicity_max - immunogenicity_min)
         else:
             new_immunogenicity_value = (immunogenicity_value - immunogenicity_max) / (
-                        immunogenicity_min - immunogenicity_max)
+                    immunogenicity_min - immunogenicity_max)
         new_antigenicity_value = (antigenicity_value - antigenicity_min) / (antigenicity_max - antigenicity_min)
         new_allergenicity_value = (allergenicity_value - allergenicity_max) / (allergenicity_min - allergenicity_max)
         df_collected_epitopes.at[i, immunogenicity_name] = new_immunogenicity_value
@@ -709,7 +698,7 @@ def get_filtered_epitopes(df_ranked_epitopes, mhc, h, ins, t, ifn):
     else:
         if h and ins and t and ifn:
             df_filtered_epitopes = top_20_df.loc[(top_20_df["half-life"] > 1) & (top_20_df["instability"] < 40) & (
-                        top_20_df["toxicity"] == "Non-Toxin") & (top_20_df["IFNg"] == "POSITIVE")]
+                    top_20_df["toxicity"] == "Non-Toxin") & (top_20_df["IFNg"] == "POSITIVE")]
         elif h and ins and t and not ifn:
             df_filtered_epitopes = top_20_df.loc[(top_20_df["half-life"] > 1) & (top_20_df["instability"] < 40) & (
                     top_20_df["toxicity"] == "Non-Toxin")]
@@ -721,7 +710,7 @@ def get_filtered_epitopes(df_ranked_epitopes, mhc, h, ins, t, ifn):
         elif h and not ins and t and ifn:
             df_filtered_epitopes = top_20_df.loc[
                 (top_20_df["half-life"] > 1) & (top_20_df["toxicity"] == "Non-Toxin") & (
-                            top_20_df["IFNg"] == "POSITIVE")]
+                        top_20_df["IFNg"] == "POSITIVE")]
         elif h and not ins and t and not ifn:
             df_filtered_epitopes = top_20_df.loc[(top_20_df["half-life"] > 1) & (top_20_df["toxicity"] == "Non-Toxin")]
         elif h and not ins and not t and ifn:
@@ -731,7 +720,7 @@ def get_filtered_epitopes(df_ranked_epitopes, mhc, h, ins, t, ifn):
         elif not h and ins and t and ifn:
             df_filtered_epitopes = top_20_df.loc[
                 (top_20_df["instability"] < 40) & (top_20_df["toxicity"] == "Non-Toxin") & (
-                            top_20_df["IFNg"] == "POSITIVE")]
+                        top_20_df["IFNg"] == "POSITIVE")]
         elif not h and ins and t and not ifn:
             df_filtered_epitopes = top_20_df.loc[
                 (top_20_df["instability"] < 40) & (top_20_df["toxicity"] == "Non-Toxin")]
@@ -895,9 +884,7 @@ def variant_filter(filename):
 
 
 def gene_filter_helper(gene):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    driver = webdriver.Chrome(options=options)
+    driver = make_driver()
     driver.get('https://www.proteinatlas.org/')
 
     sleep(1)
@@ -916,6 +903,7 @@ def gene_filter_helper(gene):
     sleep(2)
 
     specificity_box = driver.find_element(By.XPATH, '/html/body/table/tbody/tr/td[2]/div/table[5]/tbody/tr[3]/td').text
+    driver.quit()
     if "carcinoma" in specificity_box.lower():
         return True
     else:
@@ -923,9 +911,7 @@ def gene_filter_helper(gene):
 
 
 def gene_checker_helper(cancer_name):
-    options = webdriver.ChromeOptions()
-    options.add_argument("--headless=new")
-    driver = webdriver.Chrome(options=options)
+    driver = make_driver()
     driver.get('https://cancer.sanger.ac.uk/cosmic')
 
     login_email = "tbp8up@virginia.edu"
@@ -965,8 +951,10 @@ def gene_checker_helper(cancer_name):
 
     top20 = []
     for x in range(18, 95, 4):
-        top20.append(driver.find_element(By.CSS_SELECTOR, f'#top20_census > div > svg > a:nth-child({x}) > text > tspan').text)
+        top20.append(
+            driver.find_element(By.CSS_SELECTOR, f'#top20_census > div > svg > a:nth-child({x}) > text > tspan').text)
     top20_genes = [gene.split(' ')[0] for gene in top20]
+    driver.quit()
     return top20_genes
 
 
@@ -976,7 +964,8 @@ def filter_csv(variant_file):
     exons_pm = exons.loc[exons["AA change"].notna()]
     exons_spm = exons_pm.loc[~exons_pm["AA change"].str.contains(r'\*', na=False)]
     gene_mutations_series = exons_spm.groupby('Gene ID')["AA change"].apply(list)
-    sorted_gene_mutations_series = gene_mutations_series.sort_values(key=lambda x: x.map(len), ascending=False) ##should be ascending = False when actually running
+    sorted_gene_mutations_series = gene_mutations_series.sort_values(key=lambda x: x.map(len),
+                                                                     ascending=False)  ##should be ascending = False when actually running
     print(sorted_gene_mutations_series)
     return sorted_gene_mutations_series
 
@@ -1021,7 +1010,8 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
             current_df["gene"] = gene_target
             current_df["mutation"] = pm
             current_df["mhc class"] = mhc_class
-            cols = ["gene", "mutation", "mhc class"] + [c for c in current_df.columns if c not in ("gene", "mutation", "mhc class")]
+            cols = ["gene", "mutation", "mhc class"] + [c for c in current_df.columns if
+                                                        c not in ("gene", "mutation", "mhc class")]
             current_df = current_df[cols]
             print(current_df)
             # (i) Immunogenicity
@@ -1029,10 +1019,13 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
                 log_lin.append(f"Obtaining {pm} immunogenicity...")
                 log_out.text("\n".join(log_lin))
                 if mhc_class == 'I':
-                    current_df = get_local_immunogenicity_mhci(immuno_script, parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt", current_df)
+                    current_df = get_local_immunogenicity_mhci(immuno_script,
+                                                               parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt",
+                                                               current_df)
                 else:
                     fasta = (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta").read_text()
-                    peptides = [l.strip() for l in (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
+                    peptides = [l.strip() for l in
+                                (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
                     current_df = get_immunogenicity_mhcii(peptides, fasta, current_df)
                 log_lin.append(f"Done immunogenicity for {pm}")
                 log_out.text("\n".join(log_lin))
@@ -1041,7 +1034,8 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
             if flags['an']:
                 log_lin.append(f"Obtaining {pm} antigenicity...")
                 log_out.text("\n".join(log_lin))
-                peptides = [l.strip() for l in (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
+                peptides = [l.strip() for l in
+                            (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
                 fasta_path = parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta"
                 current_df = get_antigenicity(peptides, fasta_path, current_df)
                 log_lin.append(f"Done antigenicity for {pm}")
@@ -1051,12 +1045,14 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
             if flags['al']:
                 log_lin.append(f"Obtaining {pm} allergenicity...")
                 log_out.text("\n".join(log_lin))
-                peptides = [l.strip() for l in (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
+                peptides = [l.strip() for l in
+                            (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
                 fasta = (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta").read_text()
                 if mhc_class == 'I':
                     current_df = get_allergenicity_algpred(peptides, fasta, current_df)
                 else:
-                    current_df = get_allergenicity_netallergen(peptides, fasta, current_df, parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta")
+                    current_df = get_allergenicity_netallergen(peptides, fasta, current_df,
+                                                               parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta")
                 log_lin.append(f"Done allergenicity for {pm}")
                 log_out.text("\n".join(log_lin))
 
@@ -1064,7 +1060,8 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
             if flags['t']:
                 log_lin.append(f"Obtaining {pm} toxicity...")
                 log_out.text("\n".join(log_lin))
-                peptides = [l.strip() for l in (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
+                peptides = [l.strip() for l in
+                            (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
                 fasta = (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta").read_text()
                 current_df = get_toxicity(peptides, fasta, current_df)
                 log_lin.append(f"Done toxicity for {pm}")
@@ -1074,7 +1071,8 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
             if any(flags[k] for k in ('h', 'ins', 'ali', 'iso', 'g')):
                 log_lin.append(f"Obtaining protparam for {pm}...")
                 log_out.text("\n".join(log_lin))
-                peptides = [l.strip() for l in (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
+                peptides = [l.strip() for l in
+                            (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
                 current_df = get_protparam(
                     peptides,
                     flags['h'], flags['ins'], flags['ali'], flags['iso'], flags['g'],
@@ -1087,7 +1085,8 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
             if flags['ifn']:
                 log_lin.append(f"Obtaining {pm} IFN-γ predictions...")
                 log_out.text("\n".join(log_lin))
-                peptides = [l.strip() for l in (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
+                peptides = [l.strip() for l in
+                            (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
                 fasta = (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta").read_text()
                 current_df = get_ifn(peptides, fasta, current_df)
                 log_lin.append(f"Done IFN-γ for {pm}")
@@ -1167,7 +1166,6 @@ def run_personalized(sorted_gene_mutations_series, case, num_genes, cancer, i, a
     """Main entry: select genes, call process_one_gene, then postprocess, then zip results."""
     if log_lin is None:
         log_lin = []
-    chromedriver_autoinstaller.install()
 
     # Gene selection
     if case:
@@ -1311,8 +1309,8 @@ with tab1:
     case_selection = st.radio(
         "Vaccine Design Module",
         [
-            "Module 1: Identify Generalized Variants", # Human Protein Atlas
-            "Module 2: Identify Cancer-Specific Variants" # COSMIC Database
+            "Module 1: Identify Generalized Variants",  # Human Protein Atlas
+            "Module 2: Identify Cancer-Specific Variants"  # COSMIC Database
         ]
     )
     case = (case_selection == "Module 2: Identify Cancer-Specific Variants")
@@ -1517,11 +1515,11 @@ with tab3:
 
         Welcome to the documentation tab! Below you’ll find a detailed, step-by-step guide to what each section of the 
         Personalized Cancer Vaccine workflow does and how to use it.
-        
+
         ## ① Generate Aggregated MHC Files
 
         ### 1. Upload your .CSV output file from Partek Flow.
-        
+
         Reads your Partek Flow CSV of variants and returns a list of genes with point mutations, sorted by most mutations.
         The .csv file can only be from Partek Flow. Partek analyzes desired tissue samples to generate a list of potential mutations.
 
@@ -1535,25 +1533,25 @@ with tab3:
         7. Returns the list.
 
         ### 2. Select your vaccine design module
-        
+
         There are two different modules "pathways" that AutoEpiCollect 2.0 can use to select epitopes for the cancer vaccine.
-        
+
         1. The first is by verifying the carcinogenic properties of the filtered genes from Partek Flow using the Human 
         Protein Atlas Database. This is considered a more generalized workflow that keeps genes if they have any 
         potential carcinogenic effect. 
         2. The second module is more cancer-specific. If you select module 2, you will be able to enter a specific cancer
         subtype you are interested in treating. AutoEpiCollect 2.0 will then enter this cancer subtype into the COSMIC 
         Database and select genes that overlap with the top 20 most commonly mutated genes for the desired type of cancer. 
-        
+
         Once you submit your Partek Flow .csv file and it is successfully read, another box will appear depending on the module you have selected.
         - If you selected module 1, you will be able to choose the number of genes that you want AutoEpiCollect 2.0 to use during the epitope selection process.
         - If you selected module 2, you will be able to enter your cancer subtype of interest.
-        
+
         ### 3. Choose MHC class(es) and additional epitope characteristics
-        
+
         The final options in the first phase allow you to choose which MHC classes and additional epitope 
         characteristics you want AutoEpiCollect 2.0 to collect. 
-        
+
         1. MHC Classes: You can either choose from MHC Class I, Class II, or both. "Class I" means that AutoEpiCollect 2.0 will 
         collect and analyze epitopes that bind MHC Class I molecules (these present peptides to CD8+ T cells. Likewise, "Class II"
         means that collected epitopes will bind MHC Class II molecules (these present peptides to CD4+ T cells). 
@@ -1586,15 +1584,15 @@ with tab3:
            (usually CD4⁺ Th1 or CD8⁺ CTLs). IFN-γ is a key cytokine for anti-tumor immunity—it activates macrophages 
            and enhances cytotoxic T cell responses. Peptides that drive strong IFN-γ release are more likely to elicit 
            effective, tumor-killing immune responses. Tool used for collection: **IFNEpitope**
-           
+
         ### 4. Resultant epitopes and FASTA file for antigenicity
-        
+
         After clicking the submission button, AutoEpiCollect 2.0 will collect epitope and epitope characteristics for each 
         gene and point mutation of interest (using the parameters chosen). When the initial run is complete, you will
         be able to download a ZIP file that contains the following files depending on which MHC Class option you selected.
         - 'aggregated_mhc_I.xlsx' + 'all_peptides_anti_mhci.fasta'
         - 'aggregated_mhc_II.xlsx` + 'all_peptides_anti_mhcii.fasta'
-        
+
         The aggregated .xlsx files contain a master spreadsheet of all the epitopes collected with each epitope's 
         desired characteristics, as well as the point mutation and gene it originated from. The .fasta file contains all 
         unique epitopes in FASTA format. **This is important as it is file you will need to submit to the VaxiJen tool to 
@@ -1602,7 +1600,7 @@ with tab3:
         Since VaxiJen currently has a CAPTCHA system in place, AutoEpiCollect cannot 
         automate webscraping from this website. Follow the steps below to obtain the necessary files from VaxiJen for 
         submission in the next tab.**
-        
+
         1. Visit https://www.ddg-pharmfac.net/vaxijen/VaxiJen/VaxiJen.html. This is the VaxiJen website where you will
         obtain antigenicity values
         2. Click "Choose File", then upload the 'all_peptides_anti_mhc(i or ii).fasta' file. You will need to do this 
@@ -1614,35 +1612,35 @@ with tab3:
         Text below shows a sample output from VaxiJen copy and pasted into a new .txt file:
         ```txt
         Your Sequence:
-        
+
         >peptide_1
-        
+
         GLAGLLGLI
-        
+
         Overall Prediction for the Protective Antigen = -1.2806 ( Probable NON-ANTIGEN ).
-        
+
         Your Sequence:
-        
+
         >peptide_2
-        
+
         GLITCLICGV
-        
+
         Overall Prediction for the Protective Antigen = 0.5635 ( Probable ANTIGEN ).
-        
+
         Your Sequence:
-        
+
         >peptide_3
-        
+
         GLLGLITCL
-        
+
         Overall Prediction for the Protective Antigen = -0.4888 ( Probable NON-ANTIGEN ).
         ```
-        
+
         Now, gather you're aggregated .xlsx files with epitope data and the .txt files with copied antigenicity output 
         data and proceed to the next tab (Process Aggregated Files).
-        
+
         ## ② Process Aggregated Files
-        
+
         Once you have your aggregated `.xlsx` files and antigenicity `.txt` outputs from VaxiJen, use this second tab to
         merge, rank, filter, and—optionally—calculate population coverage.
 
