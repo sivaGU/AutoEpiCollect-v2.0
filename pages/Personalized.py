@@ -92,7 +92,7 @@ def get_gene_sequence(target_gene):
     sleep(1)
 
     gene_button = driver.find_element(By.XPATH,
-                                      '/html/body/div[1]/div/div/div/main/div[3]/table/tbody/tr[1]/td[2]/span/a')
+                                      '/html/body/div[1]/div/div/div/main/div[4]/table/tbody/tr[1]/td[2]/span/a')
     gene_button.click()
 
     sleep(5)
