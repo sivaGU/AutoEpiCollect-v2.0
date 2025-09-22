@@ -1,4 +1,5 @@
 import sys
+import shutil
 import subprocess
 import pandas as pd
 import numpy as np
@@ -20,6 +21,9 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.os_manager import ChromeType
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import KFold
 from sklearn.model_selection import cross_val_score
@@ -29,12 +33,22 @@ import streamlit as st
 
 def make_driver():
     opts = Options()
-    # headless + container-friendly flags
+    # required for headless in containers
     opts.add_argument("--headless=new")
     opts.add_argument("--no-sandbox")
     opts.add_argument("--disable-dev-shm-usage")
-    # Selenium Manager will auto-download a compatible browser/driver on first run
-    return webdriver.Chrome(options=opts)
+    # stability niceties
+    opts.add_argument("--disable-gpu")
+    opts.add_argument("--window-size=1920,1080")
+
+    # point explicitly to the system Chromium we install via packages.txt
+    chrome_bin = shutil.which("chromium") or shutil.which("google-chrome")
+    if chrome_bin:
+        opts.binary_location = chrome_bin
+
+    # get a matching chromedriver
+    driver_path = ChromeDriverManager(chrome_type=ChromeType.CHROMIUM).install()
+    return webdriver.Chrome(service=Service(driver_path), options=opts)
 
 
 # Function to obtain the fasta-formatted gene sequence of interest from UniProt
