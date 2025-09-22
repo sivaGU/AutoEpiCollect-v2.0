@@ -6,5 +6,4 @@ scipy
 matplotlib
 scikit-learn==1.7.2
 selenium==4.11.2
-chromedriver-autoinstaller
 
