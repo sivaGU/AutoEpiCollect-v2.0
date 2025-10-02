@@ -1306,7 +1306,7 @@ def vaxijen_to_df(vaxijen_txt):
 
 
 st.markdown(
-    "<h1 style='text-align: center;'>Personalized Cancer Vaccine Design</h1>",
+    "<h1 style='text-align: center;'>AutoEpiCollect 2.0 User-Driven Interface</h1>",
     unsafe_allow_html=True
 )
 

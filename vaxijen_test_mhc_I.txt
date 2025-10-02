@@ -1,0 +1,378 @@
+Your Sequence:
+
+>peptide_1
+
+GLAGLLGLI
+
+
+Overall Prediction for the Protective Antigen = -1.2806 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_2
+
+GLITCLICGV
+
+
+Overall Prediction for the Protective Antigen = 0.5635 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_3
+
+GLLGLITCL
+
+
+Overall Prediction for the Protective Antigen = -0.4888 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_4
+
+IGLAGLLGLI
+
+
+Overall Prediction for the Protective Antigen = -1.4277 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_5
+
+LITCLICGV
+
+
+Overall Prediction for the Protective Antigen = 0.5531 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_6
+
+GLLGLITCLI
+
+
+Overall Prediction for the Protective Antigen = -0.8179 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_7
+
+LLGLITCLI
+
+
+Overall Prediction for the Protective Antigen = -0.4611 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_8
+
+AGLLGLITCL
+
+
+Overall Prediction for the Protective Antigen = -0.3522 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_9
+
+GLAGLLGLIT
+
+
+Overall Prediction for the Protective Antigen = -1.2216 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_10
+
+LIGLAGLLGL
+
+
+Overall Prediction for the Protective Antigen = -1.3895 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_11
+
+LITCLICGVL
+
+
+Overall Prediction for the Protective Antigen = 0.1092 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_12
+
+IGLAGLLGL
+
+
+Overall Prediction for the Protective Antigen = -1.5642 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_13
+
+LLGLITCLIC
+
+
+Overall Prediction for the Protective Antigen = -0.1213 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_14
+
+GLITCLICG
+
+
+Overall Prediction for the Protective Antigen = 0.1942 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_15
+
+LAGLLGLITC
+
+
+Overall Prediction for the Protective Antigen = -0.4341 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_16
+
+LGLITCLICG
+
+
+Overall Prediction for the Protective Antigen = 0.2430 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_17
+
+AGLLGLITC
+
+
+Overall Prediction for the Protective Antigen = -0.3547 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_18
+
+LAGLLGLIT
+
+
+Overall Prediction for the Protective Antigen = -1.0614 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_19
+
+LGLITCLIC
+
+
+Overall Prediction for the Protective Antigen = 0.0498 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_20
+
+GTDQALVKK
+
+
+Overall Prediction for the Protective Antigen = 0.5928 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_21
+
+KVKGTDQALV
+
+
+Overall Prediction for the Protective Antigen = 1.3887 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_22
+
+ALVKKEISI
+
+
+Overall Prediction for the Protective Antigen = -0.5649 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_23
+
+ALVKKEISIL
+
+
+Overall Prediction for the Protective Antigen = -0.5116 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_24
+
+KGTDQALVKK
+
+
+Overall Prediction for the Protective Antigen = 0.8779 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_25
+
+KVKGTDQAL
+
+
+Overall Prediction for the Protective Antigen = 1.7539 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_26
+
+FVKVKGTDQA
+
+
+Overall Prediction for the Protective Antigen = 1.5207 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_27
+
+KGTDQALVK
+
+
+Overall Prediction for the Protective Antigen = 0.9535 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_28
+
+QALVKKEISI
+
+
+Overall Prediction for the Protective Antigen = -0.3823 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_29
+
+GTDQALVKKE
+
+
+Overall Prediction for the Protective Antigen = 0.6810 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_30
+
+VKVKGTDQAL
+
+
+Overall Prediction for the Protective Antigen = 1.5812 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_31
+
+VKGTDQALVK
+
+
+Overall Prediction for the Protective Antigen = 1.2333 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_32
+
+DQALVKKEI
+
+
+Overall Prediction for the Protective Antigen = -0.3669 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_33
+
+TDQALVKKEI
+
+
+Overall Prediction for the Protective Antigen = -0.3730 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_34
+
+QALVKKEIS
+
+
+Overall Prediction for the Protective Antigen = -0.3139 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_35
+
+VKGTDQALV
+
+
+Overall Prediction for the Protective Antigen = 1.2962 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_36
+
+DQALVKKEIS
+
+
+Overall Prediction for the Protective Antigen = -0.2394 ( Probable NON-ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_37
+
+VKVKGTDQA
+
+
+Overall Prediction for the Protective Antigen = 1.8840 ( Probable ANTIGEN ).
+
+
+Your Sequence:
+
+>peptide_38
+
+TDQALVKKE
+
+
+Overall Prediction for the Protective Antigen = 0.2824 ( Probable NON-ANTIGEN ).
