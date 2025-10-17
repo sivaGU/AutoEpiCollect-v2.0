@@ -30,6 +30,10 @@ from sklearn.model_selection import cross_val_score
 from functools import partial
 import urllib.parse, urllib.request
 import streamlit as st
+import json
+import time
+from typing import List, Dict, Any
+import requests
 
 
 def make_driver():
@@ -374,38 +378,230 @@ def get_local_immunogenicity_mhci(immunogenicity_file, peptide_file, current_df)
 
 # Function that obtain the immunogenicity scores of MHC II peptides by webscraping the IEDB website
 # This function is a work in progress as this website is finnicky and slow right now
-def get_immunogenicity_mhcii(peptide_list, p, current_df):
+# def get_immunogenicity_mhcii(peptide_list, p, current_df):
+#     driver = make_driver()
+#     driver.get('http://tools.iedb.org/CD4episcore/')
+#
+#     elem = WebDriverWait(driver, 60).until(
+#         ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')))
+#
+#     searchbox = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')
+#     print(p)
+#     searchbox.send_keys(p)
+#
+#     sleep(1)
+#
+#     threshold_button = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[9]/td[2]/select/option[10]')
+#     threshold_button.click()
+#
+#     sleep(2)
+#
+#     submit_button = driver.find_elements(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[12]/th/div/input[1]')
+#     submit_button[0].click()
+#
+#     elem = WebDriverWait(driver, 120).until(
+#         ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[1]/h2')))
+#
+#     for x in range(len(peptide_list)):
+#         result = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[6]').text
+#         e = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[3]').text
+#         current_df.loc[current_df["peptide"] == e, "immunogenicity"] = float(result)
+#
+#     # driver.close()
+#     driver.quit()
+#     return current_df
+
+
+def get_immunogenicity_mhcii(peptide_list, current_df):
     driver = make_driver()
-    driver.get('http://tools.iedb.org/CD4episcore/')
+    driver.get('https://nextgen-tools.iedb.org/pipeline?tool=tc2')
 
     elem = WebDriverWait(driver, 60).until(
-        ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')))
+        ec.presence_of_element_located((By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[4]/textarea')))
 
-    searchbox = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')
-    print(p)
-    searchbox.send_keys(p)
+    searchbox = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[4]/textarea')
+    searchbox.send_keys("\n".join(peptide_list))
 
     sleep(1)
 
-    threshold_button = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[9]/td[2]/select/option[10]')
-    threshold_button.click()
+    method_button = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[13]/div/div/button')
+    driver.execute_script("arguments[0].scrollIntoView();", method_button)
+    driver.execute_script("arguments[0].click();", method_button)
 
-    sleep(2)
+    sleep(1)
 
-    submit_button = driver.find_elements(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[12]/th/div/input[1]')
-    submit_button[0].click()
+    episcore_button = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[13]/div/div/div/button[2]')
+    episcore_button.click()
+
+    sleep(1)
+
+    submit_button = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[14]/div/button[2]')
+    driver.execute_script("arguments[0].scrollIntoView();", submit_button)
+    driver.execute_script("arguments[0].click();", submit_button)
 
     elem = WebDriverWait(driver, 120).until(
-        ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[1]/h2')))
+        ec.presence_of_element_located((By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/ul/li[2]/a')))
+
+    sleep(1)
+
+    table = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div')
+    driver.execute_script("arguments[0].scrollIntoView();", table)
+    driver.execute_script("arguments[0].click();", table)
 
     for x in range(len(peptide_list)):
-        result = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[6]').text
-        e = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[3]').text
+        result = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[1]').get_attribute("innerHTML")
+        e = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[5]').get_attribute("innerHTML")
         current_df.loc[current_df["peptide"] == e, "immunogenicity"] = float(result)
 
     # driver.close()
     driver.quit()
     return current_df
+
+# NG_BASE = "https://api-nextgen-tools.iedb.org/api/v1"
+#
+#
+# def _ng_submit_mhcii_immunogenicity(peptides: List[str]) -> str:
+#     print("\n".join(peptides))
+#     # One peptide per line is accepted by NG Tools; no FASTA headers needed
+#     payload = {
+#         "pipeline_id": "",
+#         "run_stage_range": [1, 1],
+#         "stages": [
+#             {
+#                 "stage_number": 1,
+#                 "tool_group": "mhcii",
+#                 "input_sequence_text": "\n".join(peptides),  # one peptide per line
+#                 "input_parameters": {
+#                     "peptide_length_range": [15, 15],  # typical CD4 length
+#                     "alleles": "DRB1*01:01",
+#                     "predictors": [
+#                         {"type": "immunogenicity", "method": "cd4episcore"}
+#                     ]
+#                 }
+#             }
+#         ]
+#     }
+#     r = requests.post(f"{NG_BASE}/pipeline", json=payload, timeout=120)
+#     print(r.text)
+#     r.raise_for_status()
+#     return r.json()["result_id"]
+#
+#
+# def _ng_poll_result(result_id: str, poll_every_s: float = 2.0, timeout_s: int = 300) -> Dict[str, Any]:
+#     """
+#     Poll the result endpoint until 'status' is 'completed' (or error/timeout).
+#     Returns the full JSON result payload.
+#     """
+#     t0 = time.time()
+#     url = f"{NG_BASE}/results/{result_id}"
+#     while True:
+#         r = requests.get(url, timeout=60)
+#         r.raise_for_status()
+#         data = r.json()
+#
+#         status = data.get("status", "").lower()
+#         if status == "completed":
+#             return data
+#         if status in ("failed", "error"):
+#             raise RuntimeError(f"IEDB NG job failed: {data}")
+#
+#         if time.time() - t0 > timeout_s:
+#             raise TimeoutError(f"Timed out waiting for IEDB NG result {result_id}")
+#
+#         time.sleep(poll_every_s)
+#
+#
+# def _extract_cd4_immunogenicity_api(result_json: Dict[str, Any]) -> Dict[str, float]:
+#     """
+#     Parse NG Tools result JSON -> {peptide: immunogenicity_score}.
+#     The exact schema may include tables keyed by predictor; handle common shapes robustly.
+#     """
+#     scores: Dict[str, float] = {}
+#
+#     # Typical NG output groups tables under 'tables' or 'outputs'
+#     tables = []
+#     if isinstance(result_json.get("tables"), list):
+#         tables = result_json["tables"]
+#     elif isinstance(result_json.get("outputs"), list):
+#         # Some releases use 'outputs' with embedded 'table'
+#         for out in result_json["outputs"]:
+#             if isinstance(out, dict) and out.get("type") == "table":
+#                 tables.append(out)
+#
+#     # Look for a table that contains 'peptide' and an immunogenicity column
+#     candidate_cols = {"immunogenicity", "immunogenicity_score", "cd4_immunogenicity", "episcore"}
+#     for tbl in tables:
+#         rows = tbl.get("rows") or tbl.get("data") or []
+#         if not rows:
+#             continue
+#         # rows are usually list[dict] or list[list] with 'columns'
+#         if isinstance(rows[0], dict):
+#             # dict rows
+#             for row in rows:
+#                 pep = row.get("peptide") or row.get("Peptide") or row.get("sequence")
+#                 if not pep:
+#                     continue
+#                 # find the first matching score column
+#                 val = None
+#                 for c in candidate_cols:
+#                     if c in row:
+#                         val = row[c]
+#                         break
+#                 if val is not None:
+#                     try:
+#                         scores[pep] = float(val)
+#                     except (TypeError, ValueError):
+#                         pass
+#         elif isinstance(rows[0], list):
+#             # table with headers
+#             headers = tbl.get("columns") or tbl.get("header") or []
+#             header_lc = [str(h).strip().lower() for h in headers]
+#             try:
+#                 pep_idx = header_lc.index("peptide")
+#             except ValueError:
+#                 pep_idx = header_lc.index("sequence") if "sequence" in header_lc else -1
+#             score_idx = -1
+#             for cname in candidate_cols:
+#                 if cname in header_lc:
+#                     score_idx = header_lc.index(cname)
+#                     break
+#             if pep_idx >= 0 and score_idx >= 0:
+#                 for row in rows:
+#                     pep = row[pep_idx]
+#                     val = row[score_idx]
+#                     try:
+#                         scores[str(pep)] = float(val)
+#                     except (TypeError, ValueError):
+#                         pass
+#
+#     if not scores:
+#         # Surface what we received to help debug schema changes
+#         raise ValueError("Could not find CD4 immunogenicity scores in NG Tools response.")
+#     return scores
+#
+#
+# def get_immunogenicity_mhcii_api(peptide_list: List[str], current_df: "pd.DataFrame") -> "pd.DataFrame":
+#     """
+#     Replacement for Selenium-based CD4Episcore scraping.
+#     Calls IEDB Next-Gen Tools API and writes 'immunogenicity' into current_df by peptide.
+#     """
+#     if not peptide_list:
+#         return current_df
+#
+#     # 1) Submit job
+#     result_id = _ng_submit_mhcii_immunogenicity(peptide_list)
+#
+#     # 2) Poll for completion
+#     result_json = _ng_poll_result(result_id)
+#
+#     # 3) Extract {peptide: score}
+#     pep2score = _extract_cd4_immunogenicity(result_json)
+#
+#     # 4) Merge into your dataframe
+#     #    (assumes current_df has a 'peptide' column; keeps rows with no score as NaN)
+#     current_df = current_df.copy()
+#     current_df["immunogenicity"] = current_df["peptide"].map(pep2score)
+#     return current_df
 
 
 # Function that obtains the antigenicity scores of both MHC I and II peptides.
@@ -1060,7 +1256,7 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
                     fasta = (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta").read_text()
                     peptides = [l.strip() for l in
                                 (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
-                    current_df = get_immunogenicity_mhcii(peptides, fasta, current_df)
+                    current_df = get_immunogenicity_mhcii(peptides, current_df)
                 log_lin.append(f"Done immunogenicity for {pm}")
                 log_out.text("\n".join(log_lin))
 
