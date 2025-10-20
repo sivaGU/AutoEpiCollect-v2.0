@@ -1105,7 +1105,7 @@ def process_one_gene(gene_target, all_mutations, parent_dir, flags, mhc_list, lo
                     fasta = (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.fasta").read_text()
                     peptides = [l.strip() for l in
                                 (parent_dir / "Sequences" / f"{pm}peptides_{mhc_class}.txt").read_text().splitlines()]
-                    current_df = get_immunogenicity_mhcii(peptides, fasta, current_df)
+                    current_df = get_immunogenicity_mhcii(peptides, current_df)
                 log_lin.append(f"Done immunogenicity for {pm}")
                 log_out.text("\n".join(log_lin))
 
