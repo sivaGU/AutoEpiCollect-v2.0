@@ -374,33 +374,78 @@ def get_local_immunogenicity_mhci(immunogenicity_file, peptide_file, current_df)
 
 # Function that obtain the immunogenicity scores of MHC II peptides by webscraping the IEDB website
 # This function is a work in progress as this website is finnicky and slow right now
-def get_immunogenicity_mhcii(peptide_list, p, current_df):
+# def get_immunogenicity_mhcii(peptide_list, p, current_df):
+#     driver = make_driver()
+#     driver.get('http://tools.iedb.org/CD4episcore/')
+#
+#     elem = WebDriverWait(driver, 60).until(
+#         ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')))
+#
+#     searchbox = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')
+#     print(p)
+#     searchbox.send_keys(p)
+#
+#     sleep(1)
+#
+#     threshold_button = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[9]/td[2]/select/option[10]')
+#     threshold_button.click()
+#
+#     sleep(2)
+#
+#     submit_button = driver.find_elements(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[12]/th/div/input[1]')
+#     submit_button[0].click()
+#
+#     elem = WebDriverWait(driver, 120).until(
+#         ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[1]/h2')))
+#
+#     for x in range(len(peptide_list)):
+#         result = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[6]').text
+#         e = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[3]').text
+#         current_df.loc[current_df["peptide"] == e, "immunogenicity"] = float(result)
+#
+#     # driver.close()
+#     driver.quit()
+#     return current_df
+
+def get_immunogenicity_mhcii(peptide_list, current_df):
     driver = make_driver()
-    driver.get('http://tools.iedb.org/CD4episcore/')
+    driver.get('https://nextgen-tools.iedb.org/pipeline?tool=tc2')
 
     elem = WebDriverWait(driver, 60).until(
-        ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')))
+        ec.presence_of_element_located((By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[4]/textarea')))
 
-    searchbox = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[3]/td[2]/textarea')
-    print(p)
-    searchbox.send_keys(p)
+    searchbox = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[4]/textarea')
+    searchbox.send_keys("\n".join(peptide_list))
 
     sleep(1)
 
-    threshold_button = driver.find_element(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[9]/td[2]/select/option[10]')
-    threshold_button.click()
+    method_button = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[13]/div/div/button')
+    driver.execute_script("arguments[0].scrollIntoView();", method_button)
+    driver.execute_script("arguments[0].click();", method_button)
 
-    sleep(2)
+    sleep(1)
 
-    submit_button = driver.find_elements(By.XPATH, '/html/body/div[3]/form/table/tbody/tr[12]/th/div/input[1]')
-    submit_button[0].click()
+    episcore_button = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[13]/div/div/div/button[2]')
+    episcore_button.click()
+
+    sleep(1)
+
+    submit_button = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/form/div[14]/div/button[2]')
+    driver.execute_script("arguments[0].scrollIntoView();", submit_button)
+    driver.execute_script("arguments[0].click();", submit_button)
 
     elem = WebDriverWait(driver, 120).until(
-        ec.presence_of_element_located((By.XPATH, '/html/body/div[3]/div[1]/h2')))
+        ec.presence_of_element_located((By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/ul/li[2]/a')))
+
+    sleep(1)
+
+    table = driver.find_element(By.XPATH, '/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div')
+    driver.execute_script("arguments[0].scrollIntoView();", table)
+    driver.execute_script("arguments[0].click();", table)
 
     for x in range(len(peptide_list)):
-        result = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[6]').text
-        e = driver.find_element(By.XPATH, f'/html/body/div[3]/div[1]/div[3]/table/tbody/tr[{x + 1}]/td[3]').text
+        e = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[1]').get_attribute("innerHTML")
+        result = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[5]').get_attribute("innerHTML")
         current_df.loc[current_df["peptide"] == e, "immunogenicity"] = float(result)
 
     # driver.close()
