@@ -449,8 +449,8 @@ def get_immunogenicity_mhcii(peptide_list, current_df):
     driver.execute_script("arguments[0].click();", table)
 
     for x in range(len(peptide_list)):
-        result = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[1]').get_attribute("innerHTML")
-        e = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[5]').get_attribute("innerHTML")
+        e = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[1]').get_attribute("innerHTML")
+        result = driver.find_element(By.XPATH, f'/html/body/app-root/app-pipeline-new/mat-drawer-container/mat-drawer-content/app-t-cell-prediction-2/div[2]/div/div[2]/app-result-table/div/div[2]/div/div/table/tbody/tr[{x + 1}]/td[5]').get_attribute("innerHTML")
         current_df.loc[current_df["peptide"] == e, "immunogenicity"] = float(result)
 
     # driver.close()
