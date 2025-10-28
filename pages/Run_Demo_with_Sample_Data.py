@@ -162,9 +162,104 @@ def make_mutant_genes(mutant_list, gene_seq, parent_dir):
                 if r != 1:
                     print('Error while writing sequence:  ' + seq_record.id)
 
-
 # Function that uses the IEDB Tools API to obtain potential epitopes from the mutant gene fasta files, as well as
 # the binding affinity of the epitopes to MHC I and II molecules
+# def get_epitopes_ba(mutant_list, mhc, parent_dir, log_out, log_lin):
+#     if mhc == "I":
+#         epitopes_dict = {}
+#         for m in mutant_list:
+#             target_sequence = ""
+#             epitope_lengths = ""
+#             fasta_file = parent_dir / "mutant_gene_fastas" / f"{m}.fasta"
+#             for seq_record in SeqIO.parse(open(fasta_file, mode='r'), 'fasta'):
+#                 sequence = str(seq_record.seq)
+#                 loc = m[:-1]
+#                 loc = loc[1:]
+#                 loc = int(loc) - 1
+#                 # target_sequence = sequence[loc - 19:loc] + sequence[loc:loc + 20]
+#                 target_sequence = sequence[max(0, loc - 19): min(len(sequence), loc + 20)]
+#                 print(target_sequence)
+#                 with open("MHCI_HLA_input.txt", "r") as h:
+#                     alleles = h.read() * 2
+#                     alleles = alleles[:-1]
+#                 epitope_lengths = "9," * 27 + "10," * 26 + "10"
+#
+#             mhc_i = subprocess.run(["curl", "--data",
+#                                     f'method=netmhcpan_ba&sequence_text={target_sequence}&allele={alleles}&length={epitope_lengths}',
+#                                     "http://tools-cluster-interface.iedb.org/tools_api/mhci/"], capture_output=True,
+#                                    text=True)
+#             output = mhc_i.stdout
+#             print(output)
+#             table = StringIO(output)
+#             df = pd.read_table(table, sep=r"\s+")
+#             df = df.rename(columns={"ic50": "binding affinity (nM)"})
+#             column_titles = ["allele", "seq_num", "start", "end", "length", "peptide", "core", "icore",
+#                              "percentile_rank", "binding affinity (nM)"]
+#             df = df.reindex(columns=column_titles)
+#             for i in range(df.shape[0]):
+#                 affinity = float(df["binding affinity (nM)"][i])
+#                 if affinity <= 50:
+#                     df.at[i, "binding score"] = "STRONG"
+#                 elif 50 < affinity <= 500:
+#                     df.at[i, "binding score"] = "NORMAL"
+#                 elif 500 < affinity <= 5000:
+#                     df.at[i, "binding score"] = "WEAK"
+#                 else:
+#                     df.at[i, "binding score"] = "N/A"
+#             print(df)
+#             epitopes_dict[m] = df
+#             print(f"{m} done")
+#             log_lin.append(f"{m} done")
+#             log_out.text("\n".join(log_lin))
+#     else:
+#         epitopes_dict = {}
+#         for m in mutant_list:
+#             target_sequence = ""
+#             epitope_lengths = ""
+#             fasta_file = parent_dir / "mutant_gene_fastas" / f"{m}.fasta"
+#             for seq_record in SeqIO.parse(open(fasta_file, mode='r'), 'fasta'):
+#                 sequence = str(seq_record.seq)
+#                 loc = m[:-1]
+#                 loc = loc[1:]
+#                 loc = int(loc) - 1
+#                 # target_sequence = sequence[loc - 49:loc] + sequence[loc:loc + 50]
+#                 target_sequence = sequence[max(0, loc - 49): min(len(sequence), loc + 50)]
+#                 print(target_sequence)
+#                 with open("MHCII_HLA_input.txt", "r") as h:
+#                     alleles = h.read()
+#                     alleles = alleles[:-1]
+#                 epitope_lengths = "15," * 26 + "15"
+#
+#             mhc_ii = subprocess.run(["curl", "--data",
+#                                      f'method=netmhciipan&sequence_text={target_sequence}&allele={alleles}&length={epitope_lengths}',
+#                                      "http://tools-cluster-interface.iedb.org/tools_api/mhcii/"],
+#                                     capture_output=True, text=True)
+#             output = mhc_ii.stdout
+#             print(output)
+#             table = StringIO(output)
+#             df = pd.read_table(table, sep=r"\s+")
+#             df = df.rename(columns={"ic50": "binding affinity (nM)"})
+#             column_titles = ["allele", "seq_num", "start", "end", "length", "core_peptide", "peptide", "rank",
+#                              "binding affinity (nM)"]
+#             df = df.reindex(columns=column_titles)
+#             for i in range(df.shape[0]):
+#                 affinity = float(df["binding affinity (nM)"][i])
+#                 if affinity <= 50:
+#                     df.at[i, "binding score"] = "STRONG"
+#                 elif 50 < affinity <= 500:
+#                     df.at[i, "binding score"] = "NORMAL"
+#                 elif 500 < affinity <= 5000:
+#                     df.at[i, "binding score"] = "WEAK"
+#                 else:
+#                     df.at[i, "binding score"] = "N/A"
+#             print(df)
+#             epitopes_dict[m] = df
+#             print(f"{m} done")
+#             log_lin.append(f"{m} done")
+#             log_out.text("\n".join(log_lin))
+#     return epitopes_dict
+
+
 def get_epitopes_ba(mutant_list, mhc, parent_dir, log_out, log_lin):
     if mhc == "I":
         epitopes_dict = {}
@@ -185,13 +280,15 @@ def get_epitopes_ba(mutant_list, mhc, parent_dir, log_out, log_lin):
                     alleles = alleles[:-1]
                 epitope_lengths = "9," * 27 + "10," * 26 + "10"
 
-            mhc_i = subprocess.run(["curl", "--data",
-                                    f'method=netmhcpan_ba&sequence_text={target_sequence}&allele={alleles}&length={epitope_lengths}',
-                                    "http://tools-cluster-interface.iedb.org/tools_api/mhci/"], capture_output=True,
-                                   text=True)
+            mhc_i = subprocess.run(
+                ["curl", "-L", "--data",
+                 f'method=netmhcpan_ba&sequence_text={target_sequence}&allele={alleles}&length={epitope_lengths}',
+                 "https://tools-cluster-interface.iedb.org/tools_api/mhci/"],
+                capture_output=True, text=True
+            )
             output = mhc_i.stdout
+            print(output)
             table = StringIO(output)
-            print(table)
             df = pd.read_table(table, sep=r"\s+")
             df = df.rename(columns={"ic50": "binding affinity (nM)"})
             column_titles = ["allele", "seq_num", "start", "end", "length", "peptide", "core", "icore",
@@ -231,11 +328,14 @@ def get_epitopes_ba(mutant_list, mhc, parent_dir, log_out, log_lin):
                     alleles = alleles[:-1]
                 epitope_lengths = "15," * 26 + "15"
 
-            mhc_ii = subprocess.run(["curl", "--data",
-                                     f'method=netmhciipan&sequence_text={target_sequence}&allele={alleles}&length={epitope_lengths}',
-                                     "http://tools-cluster-interface.iedb.org/tools_api/mhcii/"],
-                                    capture_output=True, text=True)
+            mhc_ii = subprocess.run(
+                ["curl", "-L", "--data",
+                 f'method=netmhciipan&sequence_text={target_sequence}&allele={alleles}&length={epitope_lengths}',
+                 "https://tools-cluster-interface.iedb.org/tools_api/mhcii/"],
+                capture_output=True, text=True
+            )
             output = mhc_ii.stdout
+            print(output)
             table = StringIO(output)
             df = pd.read_table(table, sep=r"\s+")
             df = df.rename(columns={"ic50": "binding affinity (nM)"})
@@ -1222,11 +1322,11 @@ def postprocess_gene(mhci_df, mhcii_df, flags, mhc_list, log_out, log_lin):
                 log_lin.append(f"Calculating population coverage for MHC-{mhc_class}...")
                 log_out.text("\n".join(log_lin))
 
-                opt_df = get_optimized_epitopes(df, mhc_class)
-                cov_reg, cov_opt = get_population_coverage(df, opt_df, mhc_class, results_dir)
-
-                cov_reg.to_excel(writer, sheet_name="PopCov_Regular", index=False)
-                cov_opt.to_excel(writer, sheet_name="PopCov_Optimized", index=False)
+                # opt_df = get_optimized_epitopes(df, mhc_class)
+                # cov_reg, cov_opt = get_population_coverage(df, opt_df, mhc_class, results_dir)
+                #
+                # cov_reg.to_excel(writer, sheet_name="PopCov_Regular", index=False)
+                # cov_opt.to_excel(writer, sheet_name="PopCov_Optimized", index=False)
 
         log_lin.append(f"Wrote final file for MHC-{mhc_class}: {final_path.name}")
         log_out.text("\n".join(log_lin))
