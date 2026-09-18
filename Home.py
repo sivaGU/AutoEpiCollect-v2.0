@@ -33,6 +33,6 @@ st.markdown("<p style='text-align: left;'>Samudrala, M.; Dhaveji, S.; Savsani, K
 st.markdown("<p style='text-align: center;'>For extensive documentation about AutoEpiCollect, please visit: https://autoepicollect.readthedocs.io/en/latest/</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: left;'>2. <strong>Personalized Cancer Vaccine Design</strong>: Our new release features an updated personalized cancer vaccine design that we have developed to target multiple genes using RNAseq data.</p>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center;'>Please click on the '>' in the top left corner to access the sidebar and navigate to the personalized cancer vaccine design software.</p>", unsafe_allow_html=True)
-
+st.markdown("<p style='text-align: center;'>For Contact: Dr. Sivanesan Dakshanamurthy, PhD, MBA. mailto:sivanesan@innsciteai.com; mailto:sd233@georgetown.edu</p>", unsafe_allow_html=True)
 st.sidebar.success("Select a page above")
 
